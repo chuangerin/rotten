@@ -11,20 +11,24 @@ import UIKit
 class MoviesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var errmsgView: UIView!
+    
     var movies: [NSDictionary] = []
+    var refreshControl = UIRefreshControl()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        self.errmsgView.hidden = true;
+        
         tableView.delegate = self
         tableView.dataSource = self
-        var url = "http://api.rottentomatoes.com/api/public/v1.0/lists/movies/box_office.json?apikey=dagqdghwaq3e3mxyrp7kmmj5&limit=20&country=us"
-        var request = NSURLRequest(URL: NSURL(string: url))
-        NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) { (response: NSURLResponse!, data: NSData!, error: NSError!) -> Void in
-            var object = NSJSONSerialization.JSONObjectWithData(data, options: nil, error: nil) as NSDictionary
-            //println("object: \(object)")
-            self.movies = object["movies"] as [NSDictionary]
-            self.tableView.reloadData()
-        }
+        
+        self.refresh(self);
+        
+        refreshControl.attributedTitle = NSAttributedString(string: "Pull to refersh")
+        refreshControl.addTarget(self, action: "refresh:", forControlEvents: UIControlEvents.ValueChanged)
+        self.tableView.addSubview(refreshControl)
         
         // Do any additional setup after loading the view.
     }
@@ -69,7 +73,7 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         */
         return cell
     }
-
+    
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if (segue.identifier == "detailView") {
             var indexPath = tableView.indexPathForSelectedRow()
@@ -78,6 +82,26 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
             svc.movieId = movie["id"] as String
         }
     }
+    
+    func refresh(sender:AnyObject)
+    {
+        MBProgressHUD.showHUDAddedTo(self.view, animated: true)
+        var url = "http://api.rottentomatoes.com/api/public/v1.0/lists/movies/box_office.json?apikey=dagqdghwaq3e3mxyrp7kmmj5&limit=20&country=us"
+        var request = NSURLRequest (URL: NSURL(string: url))
+        NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response: NSURLResponse!, data: NSData!, error: NSError!) -> Void in
+            if (error != nil) {
+                self.errmsgView.hidden = false
+            } else {
+                var object = NSJSONSerialization.JSONObjectWithData(data, options: nil, error: nil) as NSDictionary
+                //println("object: \(object)")
+                self.movies = object["movies"] as [NSDictionary]
+                self.tableView.reloadData()                
+            }
+            self.refreshControl.endRefreshing()
+            MBProgressHUD.hideHUDForView(self.view, animated: true)
+        }
+    }
+
     
     /*
     // MARK: - Navigation
