@@ -19,7 +19,7 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.errmsgView.hidden = true;
+        self.errmsgView.hidden = true
         
         tableView.delegate = self
         tableView.dataSource = self
@@ -95,6 +95,7 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                 var object = NSJSONSerialization.JSONObjectWithData(data, options: nil, error: nil) as NSDictionary
                 //println("object: \(object)")
                 self.movies = object["movies"] as [NSDictionary]
+                self.errmsgView.hidden = true
                 self.tableView.reloadData()                
             }
             self.refreshControl.endRefreshing()
